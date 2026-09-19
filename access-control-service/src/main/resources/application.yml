@@ -16,6 +16,20 @@ spring:
     default-schema: loyalty
     locations: classpath:db/migration
     validate-on-migrate: true
+  cache:
+    type: ${CACHE_TYPE:redis}
+    redis:
+      time-to-live: 30s
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+mybatis:
+  mapper-locations: classpath*:mapper/*.xml
+  type-handlers-package: com.loyalty.common.db
+  configuration:
+    map-underscore-to-camel-case: true
 
 eureka:
   client:

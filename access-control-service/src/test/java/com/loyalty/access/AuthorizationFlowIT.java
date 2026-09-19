@@ -46,6 +46,8 @@ class AuthorizationFlowIT {
         // No Eureka registry running in unit tests.
         r.add("eureka.client.enabled", () -> "false");
         r.add("spring.cloud.discovery.enabled", () -> "false");
+        // In-memory cache (no Redis needed in tests).
+        r.add("spring.cache.type", () -> "simple");
     }
 
     @TestConfiguration

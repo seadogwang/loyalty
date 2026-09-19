@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.loyalty.member.identity.infrastructure.IdentityMapper">
+
+    <select id="findActiveByValue" resultType="com.loyalty.member.identity.domain.MemberIdentity">
+        SELECT id, tenant_id, program_id, member_id, identity_type, identity_source,
+               identity_value, normalized_value, verified, is_primary, status,
+               effective_from, effective_to, created_at, updated_at
+        FROM loyalty.member_identity
+        WHERE program_id = #{programId}
+          AND identity_type = #{type}
+          AND identity_source = #{source}
+          AND normalized_value = #{normalized}
+          AND status = 'ACTIVE'
+    </select>
+
+    <select id="findActiveByMember" resultType="com.loyalty.member.identity.domain.MemberIdentity">
+        SELECT id, tenant_id, program_id, member_id, identity_type, identity_source,
+               identity_value, normalized_value, verified, is_primary, status,
+               effective_from, effective_to, created_at, updated_at
+        FROM loyalty.member_identity
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId} AND member_id = #{memberId}
+          AND status = 'ACTIVE'
+    </select>
+
+    <insert id="insert">
+        INSERT INTO loyalty.member_identity
+          (id, tenant_id, program_id, member_id, identity_type, identity_source,
+           identity_value, normalized_value, verified, is_primary, status, effective_from)
+        VALUES (#{id}, #{tenantId}, #{programId}, #{memberId}, #{type}, #{source},
+                #{value}, #{normalized}, #{verified}, #{isPrimary}, 'ACTIVE', now())
+    </insert>
+
+    <update id="revoke">
+        UPDATE loyalty.member_identity SET status = 'REVOKED', effective_to = #{now},
+               updated_at = now()
+        WHERE id = #{id} AND status = 'ACTIVE'
+    </update>
+</mapper>

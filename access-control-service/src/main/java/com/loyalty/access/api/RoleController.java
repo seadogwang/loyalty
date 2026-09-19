@@ -1,10 +1,9 @@
 package com.loyalty.access.api;
 
 import com.loyalty.access.api.dto.RoleDtos;
-import com.loyalty.access.audit.AuditService;
-import com.loyalty.access.domain.ScopeType;
 import com.loyalty.access.repository.AccessCommandRepository;
-import com.loyalty.access.repository.AccessReadRepository;
+import com.loyalty.common.access.audit.AuditService;
+import com.loyalty.common.access.domain.ScopeType;
 import com.loyalty.common.context.ContextHolder;
 import com.loyalty.common.context.PrincipalContext;
 import com.loyalty.common.context.TenantContext;
@@ -27,14 +26,11 @@ import static com.loyalty.access.api.dto.RoleDtos.*;
 public class RoleController {
 
     private final AccessCommandRepository command;
-    private final AccessReadRepository read;
     private final AuditService audit;
     private final JdbcClient jdbc;
 
-    public RoleController(AccessCommandRepository command, AccessReadRepository read,
-                          AuditService audit, JdbcClient jdbc) {
+    public RoleController(AccessCommandRepository command, AuditService audit, JdbcClient jdbc) {
         this.command = command;
-        this.read = read;
         this.audit = audit;
         this.jdbc = jdbc;
     }

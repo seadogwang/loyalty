@@ -2,7 +2,7 @@ package com.loyalty.access.api;
 
 import com.loyalty.access.api.dto.RoleDtos;
 import com.loyalty.access.api.dto.RoleDtos.ApprovalResponse;
-import com.loyalty.access.audit.AuditService;
+import com.loyalty.common.access.audit.AuditService;
 import com.loyalty.access.repository.AccessCommandRepository;
 import com.loyalty.common.context.ContextHolder;
 import com.loyalty.common.context.PrincipalContext;

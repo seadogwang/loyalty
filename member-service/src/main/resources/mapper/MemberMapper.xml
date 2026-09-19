@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.loyalty.member.member.infrastructure.MemberMapper">
+
+    <insert id="insert">
+        INSERT INTO loyalty.member (id, tenant_id, program_id, member_no, status)
+        VALUES (#{id}, #{tenantId}, #{programId}, #{memberNo}, 'ACTIVE')
+    </insert>
+
+    <select id="findScoped" resultType="com.loyalty.member.member.domain.Member">
+        SELECT id, tenant_id, program_id, member_no, status, joined_at,
+               merged_to_member_id, created_at, updated_at
+        FROM loyalty.member
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId} AND id = #{id}
+    </select>
+
+    <select id="findByMemberNo" resultType="com.loyalty.member.member.domain.Member">
+        SELECT id, tenant_id, program_id, member_no, status, joined_at,
+               merged_to_member_id, created_at, updated_at
+        FROM loyalty.member
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId} AND member_no = #{memberNo}
+    </select>
+
+    <update id="setStatus">
+        UPDATE loyalty.member SET status = #{status}, merged_to_member_id = #{mergedToMemberId},
+               updated_at = now()
+        WHERE id = #{id}
+    </update>
+</mapper>

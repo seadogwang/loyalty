@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,7 +19,7 @@ import java.math.BigDecimal;
  * Global JSON conventions (design 3.3 / 24.10):
  * <ul>
  *   <li>amounts / points as decimal <strong>strings</strong> to avoid float drift;</li>
- *   <li>times as ISO-8601 UTC instants.</li>
+ *   <li>times as ISO-8601 UTC instants (jsr310).</li>
  * </ul>
  */
 @Configuration
@@ -27,13 +28,11 @@ public class JacksonConfig {
     @Bean
     public Jackson2ObjectMapperBuilderCustomizer loyaltyJsonCustomizer() {
         return builder -> {
-            SimpleModule module = new SimpleModule("loyalty-decimals");
-            module.addSerializer(BigDecimal.class, new BigDecimalAsStringSerializer());
-            module.addDeserializer(BigDecimal.class, new BigDecimalFromStringDeserializer());
-            builder.modules(module);
-            builder.featuresToDisable(
-                    JsonGenerator.Feature.WRITE_NUMBERS_AS_STRINGS
-            );
+            SimpleModule decimalModule = new SimpleModule("loyalty-decimals");
+            decimalModule.addSerializer(BigDecimal.class, new BigDecimalAsStringSerializer());
+            decimalModule.addDeserializer(BigDecimal.class, new BigDecimalFromStringDeserializer());
+            builder.modulesToInstall(decimalModule, new JavaTimeModule());
+            builder.featuresToDisable(JsonGenerator.Feature.WRITE_NUMBERS_AS_STRINGS);
         };
     }
 

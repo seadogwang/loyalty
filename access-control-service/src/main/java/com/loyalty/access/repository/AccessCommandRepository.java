@@ -1,6 +1,6 @@
 package com.loyalty.access.repository;
 
-import com.loyalty.access.domain.ScopeType;
+import com.loyalty.common.access.domain.ScopeType;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 

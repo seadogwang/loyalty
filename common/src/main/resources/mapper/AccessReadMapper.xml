@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.loyalty.common.access.repository.AccessReadMapper">
+
+    <resultMap id="effectiveGrant" type="com.loyalty.common.access.domain.EffectiveGrant">
+        <constructor>
+            <arg column="permission_code" javaType="string"/>
+            <arg column="scope_type" javaType="com.loyalty.common.access.domain.ScopeType"
+                 typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+            <arg column="tenant_id" javaType="java.util.UUID"/>
+            <arg column="program_id" javaType="java.util.UUID"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="roleBinding" type="com.loyalty.common.access.domain.RoleBinding">
+        <constructor>
+            <arg column="binding_id" javaType="java.util.UUID"/>
+            <arg column="principal_id" javaType="java.util.UUID"/>
+            <arg column="role_id" javaType="java.util.UUID"/>
+            <arg column="role_code" javaType="string"/>
+            <arg column="scope_type" javaType="com.loyalty.common.access.domain.ScopeType"
+                 typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+            <arg column="tenant_id" javaType="java.util.UUID"/>
+            <arg column="program_id" javaType="java.util.UUID"/>
+        </constructor>
+    </resultMap>
+
+    <select id="findPrincipalId" resultType="java.util.UUID">
+        SELECT id FROM loyalty.auth_principal
+        WHERE principal_type = #{principalType} AND subject = #{subject} AND status = 'ACTIVE'
+    </select>
+
+    <select id="findEffectiveGrants" resultMap="effectiveGrant">
+        SELECT DISTINCT p.code AS permission_code, pr.scope_type,
+               pr.tenant_id, pr.program_id
+        FROM loyalty.auth_principal_role pr
+        JOIN loyalty.auth_role_permission rp ON rp.role_id = pr.role_id
+        JOIN loyalty.auth_permission p ON p.id = rp.permission_id
+        WHERE pr.principal_id = #{principalId}
+          AND pr.status = 'ACTIVE'
+          AND (pr.effective_to IS NULL OR pr.effective_to > now())
+    </select>
+
+    <select id="findActiveBindings" resultMap="roleBinding">
+        SELECT pr.id AS binding_id, pr.principal_id, pr.role_id,
+               r.code AS role_code, pr.scope_type,
+               pr.tenant_id, pr.program_id
+        FROM loyalty.auth_principal_role pr
+        JOIN loyalty.auth_role r ON r.id = pr.role_id
+        WHERE pr.principal_id = #{principalId}
+          AND pr.status = 'ACTIVE'
+          AND (pr.effective_to IS NULL OR pr.effective_to > now())
+    </select>
+</mapper>

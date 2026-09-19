@@ -1,11 +1,11 @@
 package com.loyalty.access.api;
 
 import com.loyalty.access.api.dto.RoleDtos;
-import com.loyalty.access.audit.AuditService;
-import com.loyalty.access.authorization.EffectiveGrantCache;
-import com.loyalty.access.domain.ScopeType;
 import com.loyalty.access.repository.AccessCommandRepository;
-import com.loyalty.access.repository.AccessReadRepository;
+import com.loyalty.common.access.audit.AuditService;
+import com.loyalty.common.access.authorization.EffectiveGrantCache;
+import com.loyalty.common.access.domain.ScopeType;
+import com.loyalty.common.access.repository.AccessReadMapper;
 import com.loyalty.common.context.ContextHolder;
 import com.loyalty.common.context.PrincipalContext;
 import com.loyalty.common.context.TenantContext;
@@ -30,11 +30,11 @@ import static com.loyalty.access.api.dto.RoleDtos.*;
 public class RoleBindingController {
 
     private final AccessCommandRepository command;
-    private final AccessReadRepository read;
+    private final AccessReadMapper read;
     private final EffectiveGrantCache cache;
     private final AuditService audit;
 
-    public RoleBindingController(AccessCommandRepository command, AccessReadRepository read,
+    public RoleBindingController(AccessCommandRepository command, AccessReadMapper read,
                                  EffectiveGrantCache cache, AuditService audit) {
         this.command = command;
         this.read = read;
