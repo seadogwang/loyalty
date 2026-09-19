@@ -1,0 +1,37 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: integration-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/loyalty}
+    username: ${DB_USER:loyalty}
+    password: ${DB_PASSWORD:loyalty}
+    hikari:
+      maximum-pool-size: 10
+  flyway:
+    enabled: true
+    schemas: loyalty
+    default-schema: loyalty
+    locations: classpath:db/migration
+    validate-on-migrate: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: integration-service
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.loyalty.*"
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

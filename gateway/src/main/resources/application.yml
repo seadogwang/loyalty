@@ -1,0 +1,45 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      # Routes ordered most-specific first; the catch-all member route is last.
+      routes:
+        - id: access-admin
+          uri: lb://access-control-service
+          predicates:
+            - Path=/api/v1/admin/**
+        - id: integration
+          uri: lb://integration-service
+          predicates:
+            - Path=/api/v1/integration/**
+        - id: engine-accounts
+          uri: lb://engine-service
+          predicates:
+            - Path=/api/v1/programs/*/members/*/accounts/**
+        - id: engine-tier-evaluations
+          uri: lb://engine-service
+          predicates:
+            - Path=/api/v1/programs/*/members/*/tier-evaluations/**
+        - id: engine-tiers
+          uri: lb://engine-service
+          predicates:
+            - Path=/api/v1/programs/*/members/*/tiers/**
+        - id: member
+          uri: lb://member-service
+          predicates:
+            - Path=/api/v1/programs/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway

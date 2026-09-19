@@ -8,6 +8,9 @@ against the task book `docs/LoyaltyDevelopmentTasks.md`.
 - **JDK 21** (LTS). A portable Microsoft OpenJDK 21 can be dropped under `tools/`
   (git-ignored) and referenced via `JAVA_HOME`.
 - **Maven 3.9.x** (the committed `mvnw` wrapper downloads it automatically).
+- **Docker** (optional) for running PostgreSQL + Kafka via `docker-compose.yml`.
+  The test suite does **not** need Docker — it uses Zonky embedded-postgres and
+  Spring `@EmbeddedKafka`.
 
 Set the JDK before building (the wrapper respects `JAVA_HOME`):
 
@@ -26,44 +29,34 @@ export JAVA_HOME=/path/to/jdk-21
 ./mvnw -Pintegration verify
 ```
 
-## Local infrastructure (optional)
+## Run (microservices)
 
-`docker-compose.yml` provides PostgreSQL 16 and Kafka 3.7 (KRaft) for running the
-platform against real services. The test suite does **not** require Docker — it uses
-Zonky embedded-postgres and Spring `@EmbeddedKafka`.
+Start Eureka first, then the services and gateway:
 
 ```bash
-docker compose up -d
+./mvnw -pl eureka-server spring-boot:run          # :8761 registry
+./mvnw -pl access-control-service spring-boot:run # :8081
+./mvnw -pl member-service spring-boot:run          # :8082
+./mvnw -pl engine-service spring-boot:run          # :8083
+./mvnw -pl integration-service spring-boot:run    # :8084
+./mvnw -pl gateway spring-boot:run                # :8080 edge
 ```
 
-## Run
+All services share the `loyalty` PostgreSQL schema and run Flyway on startup.
 
-```bash
-./mvnw spring-boot:run
-```
+## Modules
 
-## Layout
+| Module | Port | Responsibility |
+| --- | --- | --- |
+| `common` | — | Shared contracts: context, error model, event envelope, web/security primitives |
+| `database-migrations` | — | Flyway schema + seed migrations (single source) + migration ITs |
+| `eureka-server` | 8761 | Service registry (Spring Cloud Netflix Eureka) |
+| `gateway` | 8080 | Edge: JWT validation, permission pre-check, routing by path prefix |
+| `access-control-service` | 8081 | OIDC/JWT, RBAC, API permission mapping, admin, audit, approval |
+| `member-service` | 8082 | Member/Identity/Attribute/Merge + master-data config (Program/PointType/TierScheme/Tier/Benefit) |
+| `engine-service` | 8083 | Compute core (horizontally scalable): Account + Point runtime + Tier/Benefit runtime + Rule(Drools) + Order/Event |
+| `integration-service` | 8084 | External ingress, normalization, idempotency, Inbox/Outbox, Kafka |
 
-Single Spring Boot module (`loyalty-app`). Logical service boundaries are expressed as
-packages and enforced by code discipline (V1 is a shared-database, single-deployable
-per the design baseline). `docs/` is kept out of the repository.
-
-```
-src/main/java/com/loyalty/
-├── platform/         PlatformApplication bootstrap
-├── common/            context, error, event, web contracts
-├── program/           Program / PointType / TierScheme / Benefit config   (M3)
-├── member/            Member / Identity / Attribute / Merge               (M3/M8)
-├── account/           Account lifecycle                                   (M3)
-├── point/             Ledger / Allocation / Operation / Lock runtime      (M4)
-├── tier/              MemberTier / TierEvaluation                          (M7)
-├── benefit/           MemberBenefit grant/revoke                           (M7)
-├── rule/              RuleDefinition / RuleVersion / Drools + audit        (M6)
-├── access/            Principal / Role / Permission / API mapping / audit (M2)
-└── integration/       Inbox / Outbox / Kafka                               (M5)
-src/main/resources/
-├── db/migration/      Flyway migrations (V001..V012)
-└── application.yml
-```
-
-See `docs/ImplementationReport.md` (local only) for status, deviations, and verification.
+Config-vs-runtime split: `member-service` owns master-data writes (point_type,
+tier_scheme, …); `engine-service` reads config and writes runtime facts (ledger,
+member_tier). `docs/` is kept out of the repository.
