@@ -1,0 +1,37 @@
+# Local toolchain (JDK downloads, not committed)
+tools/
+
+# Project documentation is kept out of the repository
+docs/
+
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/wrapper/maven-wrapper.properties
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+*.sublime-*
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Env / secrets
+.env
+*.env.local
+application-local.yml
+application-secret.yml
+
+# Build
+build/
+out/

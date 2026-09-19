@@ -1,0 +1,56 @@
+spring:
+  application:
+    name: loyalty-platform
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/loyalty}
+    username: ${DB_USER:loyalty}
+    password: ${DB_PASSWORD:loyalty}
+    hikari:
+      maximum-pool-size: 20
+      connection-timeout: 5000
+  flyway:
+    enabled: true
+    schemas: loyalty
+    default-schema: loyalty
+    locations: classpath:db/migration
+    validate-on-migrate: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP:loyalty-platform}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.loyalty.*"
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  level:
+    com.loyalty: ${LOG_LEVEL:INFO}
+    org.springframework.security: ${SECURITY_LOG_LEVEL:WARN}
+
+# Security / OIDC (filled in M2)
+loyalty:
+  security:
+    jwt:
+      issuer-uri: ${JWT_ISSUER_URI:http://localhost:9000/auth}
+      audience: ${JWT_AUDIENCE:loyalty-platform}
