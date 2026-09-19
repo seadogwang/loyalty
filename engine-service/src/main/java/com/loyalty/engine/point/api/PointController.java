@@ -5,6 +5,7 @@ import com.loyalty.common.context.PrincipalContext;
 import com.loyalty.common.context.TenantContext;
 import com.loyalty.engine.point.BalanceService;
 import com.loyalty.engine.point.EarnService;
+import com.loyalty.engine.point.RedeemService;
 import com.loyalty.engine.point.RequestHasher;
 import com.loyalty.engine.point.api.dto.PointDtos;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,11 +21,14 @@ import java.util.UUID;
 public class PointController {
 
     private final EarnService earnService;
+    private final RedeemService redeemService;
     private final BalanceService balanceService;
     private final ObjectMapper json;
 
-    public PointController(EarnService earnService, BalanceService balanceService, ObjectMapper json) {
+    public PointController(EarnService earnService, RedeemService redeemService,
+                           BalanceService balanceService, ObjectMapper json) {
         this.earnService = earnService;
+        this.redeemService = redeemService;
         this.balanceService = balanceService;
         this.json = json;
     }
@@ -39,6 +43,21 @@ public class PointController {
         PrincipalContext principal = ContextHolder.principalContext();
         String requestHash = RequestHasher.hash(json.writeValueAsString(req));
         return earnService.earn(ctx.tenantId(), programId, memberId, accountId, req,
+                idempotencyKey, requestHash,
+                principal != null ? (principal.principalId() == null ? principal.subject() : principal.principalId().toString()) : null,
+                ContextHolder.correlationId());
+    }
+
+    @PostMapping("/point-operations/redeem")
+    public PointDtos.RedeemResponse redeem(@PathVariable UUID programId,
+                                           @PathVariable UUID memberId,
+                                           @PathVariable UUID accountId,
+                                           @RequestHeader("Idempotency-Key") String idempotencyKey,
+                                           @RequestBody PointDtos.RedeemRequest req) throws Exception {
+        TenantContext ctx = ContextHolder.tenantContext().requireTenant();
+        PrincipalContext principal = ContextHolder.principalContext();
+        String requestHash = RequestHasher.hash(json.writeValueAsString(req));
+        return redeemService.redeem(ctx.tenantId(), programId, memberId, accountId, req,
                 idempotencyKey, requestHash,
                 principal != null ? (principal.principalId() == null ? principal.subject() : principal.principalId().toString()) : null,
                 ContextHolder.correlationId());

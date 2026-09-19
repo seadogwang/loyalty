@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.loyalty.engine.point.infrastructure.PointTypeViewMapper">
+
+    <resultMap id="pointTypeView" type="com.loyalty.engine.point.domain.PointTypeView">
+        <constructor>
+            <arg column="id" javaType="java.util.UUID"/>
+            <arg column="redeemable" javaType="_boolean"/>
+            <arg column="tier_calculable" javaType="_boolean"/>
+            <arg column="record_only" javaType="_boolean"/>
+            <arg column="consumption_policy" javaType="com.loyalty.common.enums.ConsumptionPolicy"
+                 typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <select id="findScoped" resultMap="pointTypeView">
+        SELECT id, redeemable, tier_calculable, record_only, consumption_policy
+        FROM loyalty.point_type
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId} AND id = #{id}
+    </select>
+</mapper>

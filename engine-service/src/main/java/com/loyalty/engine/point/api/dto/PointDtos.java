@@ -16,6 +16,14 @@ public final class PointDtos {
     public record EarnResponse(UUID operationId, String status, UUID ledgerId,
                                 UUID pointTypeId, BigDecimal amount) {}
 
+    public record RedeemRequest(UUID pointTypeId, BigDecimal amount, Source source) {}
+
+    public record RedeemAllocationItem(UUID assetLedgerId, String allocationType, BigDecimal amount) {}
+
+    public record RedeemResponse(UUID operationId, String status, UUID redeemLedgerId,
+                                  UUID pointTypeId, BigDecimal amount,
+                                  java.util.List<RedeemAllocationItem> allocations) {}
+
     public record BalanceItem(UUID pointTypeId, BigDecimal available) {}
 
     public record BalanceResponse(UUID accountId, java.util.List<BalanceItem> balances) {}
