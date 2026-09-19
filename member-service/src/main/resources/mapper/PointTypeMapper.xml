@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.loyalty.member.config.infrastructure.PointTypeMapper">
+
+    <resultMap id="pointType" type="com.loyalty.member.config.domain.PointType">
+        <constructor>
+            <arg column="id" javaType="java.util.UUID"/>
+            <arg column="tenant_id" javaType="java.util.UUID"/>
+            <arg column="program_id" javaType="java.util.UUID"/>
+            <arg column="code" javaType="string"/>
+            <arg column="name" javaType="string"/>
+            <arg column="redeemable" javaType="_boolean"/>
+            <arg column="tier_calculable" javaType="_boolean"/>
+            <arg column="record_only" javaType="_boolean"/>
+            <arg column="consumption_policy" javaType="com.loyalty.common.enums.ConsumptionPolicy"
+                 typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+            <arg column="validity_type" javaType="string"/>
+            <arg column="validity_period" javaType="java.lang.Integer"/>
+            <arg column="status" javaType="string"/>
+            <arg column="created_at" javaType="java.time.Instant"/>
+            <arg column="updated_at" javaType="java.time.Instant"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insert">
+        INSERT INTO loyalty.point_type
+          (id, tenant_id, program_id, code, name, redeemable, tier_calculable, record_only,
+           consumption_policy, validity_type, validity_period, status)
+        VALUES (#{id}, #{tenantId}, #{programId}, #{code}, #{name}, #{redeemable}, #{tierCalculable},
+                #{recordOnly}, #{consumptionPolicy}, #{validityType}, #{validityPeriod}, 'ACTIVE')
+    </insert>
+
+    <select id="findByIdScoped" resultMap="pointType">
+        SELECT id, tenant_id, program_id, code, name, redeemable, tier_calculable, record_only,
+               consumption_policy, validity_type, validity_period, status, created_at, updated_at
+        FROM loyalty.point_type
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId} AND id = #{id}
+    </select>
+
+    <select id="findByCodeScoped" resultMap="pointType">
+        SELECT id, tenant_id, program_id, code, name, redeemable, tier_calculable, record_only,
+               consumption_policy, validity_type, validity_period, status, created_at, updated_at
+        FROM loyalty.point_type
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId} AND code = #{code}
+    </select>
+
+    <select id="listByProgram" resultMap="pointType">
+        SELECT id, tenant_id, program_id, code, name, redeemable, tier_calculable, record_only,
+               consumption_policy, validity_type, validity_period, status, created_at, updated_at
+        FROM loyalty.point_type
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId} AND status = 'ACTIVE'
+        ORDER BY code
+    </select>
+</mapper>

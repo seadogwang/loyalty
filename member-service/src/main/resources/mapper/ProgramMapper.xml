@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.loyalty.member.config.infrastructure.ProgramMapper">
+
+    <select id="findScoped" resultType="com.loyalty.member.config.domain.Program">
+        SELECT id, tenant_id, code, name, status, timezone, created_at, updated_at
+        FROM loyalty.program
+        WHERE tenant_id = #{tenantId} AND id = #{programId}
+    </select>
+</mapper>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.loyalty.engine.account.infrastructure.AccountMapper">
+
+    <resultMap id="account" type="com.loyalty.engine.account.domain.Account">
+        <constructor>
+            <arg column="id" javaType="java.util.UUID"/>
+            <arg column="tenant_id" javaType="java.util.UUID"/>
+            <arg column="program_id" javaType="java.util.UUID"/>
+            <arg column="member_id" javaType="java.util.UUID"/>
+            <arg column="account_no" javaType="string"/>
+            <arg column="account_type" javaType="string"/>
+            <arg column="status" javaType="com.loyalty.common.enums.AccountStatus"
+                 typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+            <arg column="opened_at" javaType="java.time.Instant"/>
+            <arg column="closed_at" javaType="java.time.Instant"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insert">
+        INSERT INTO loyalty.account
+          (id, tenant_id, program_id, member_id, account_no, account_type, status)
+        VALUES (#{id}, #{tenantId}, #{programId}, #{memberId}, #{accountNo}, #{accountType}, 'ACTIVE')
+    </insert>
+
+    <select id="findByIdScoped" resultMap="account">
+        SELECT id, tenant_id, program_id, member_id, account_no, account_type, status,
+               opened_at, closed_at
+        FROM loyalty.account
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId}
+          AND member_id = #{memberId} AND id = #{id}
+    </select>
+
+    <select id="memberExistsScoped" resultType="boolean">
+        SELECT EXISTS (SELECT 1 FROM loyalty.member
+                       WHERE tenant_id = #{tenantId} AND program_id = #{programId} AND id = #{memberId})
+    </select>
+
+    <update id="setStatus">
+        UPDATE loyalty.account SET status = #{status}
+               <if test="close">, closed_at = now()</if>
+        WHERE id = #{id} AND status IN ('ACTIVE','SUSPENDED')
+    </update>
+
+    <select id="lockForUpdate" resultType="int">
+        SELECT version FROM loyalty.point_account_lock
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId}
+          AND account_id = #{accountId} AND point_type_id = #{pointTypeId}
+        FOR UPDATE
+    </select>
+</mapper>

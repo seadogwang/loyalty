@@ -1,0 +1,34 @@
+-- V014: M3 API-permission mappings for account lifecycle + program/point-type config.
+-- Idempotent. Design 27.3: every API maps to a permission; unmapped APIs denied.
+
+INSERT INTO auth_permission (code, resource, action, description, managed) VALUES
+    ('account.write', 'account', 'write', 'Create/suspend/close account', true),
+    ('account.read',  'account', 'read',  'Query account', true)
+ON CONFLICT (code) DO NOTHING;
+
+-- account.write: PROGRAM_ADMIN, POINT_OPERATOR, INTEGRATION_CLIENT
+INSERT INTO auth_role_permission (role_id, permission_id)
+SELECT r.id, p.id FROM auth_role r, auth_permission p
+WHERE p.code = 'account.write' AND r.code IN ('PROGRAM_ADMIN','POINT_OPERATOR','INTEGRATION_CLIENT')
+ON CONFLICT (role_id, permission_id) DO NOTHING;
+
+-- account.read: PROGRAM_ADMIN, POINT_AUDITOR, TIER_ADMIN, READ_ONLY
+INSERT INTO auth_role_permission (role_id, permission_id)
+SELECT r.id, p.id FROM auth_role r, auth_permission p
+WHERE p.code = 'account.read'
+  AND r.code IN ('PROGRAM_ADMIN','POINT_AUDITOR','TIER_ADMIN','READ_ONLY')
+ON CONFLICT (role_id, permission_id) DO NOTHING;
+
+INSERT INTO auth_api_permission (http_method, path_template, permission_id, scope_type)
+SELECT v.method, v.path, p.id, 'PROGRAM'
+FROM (VALUES
+    ('GET',  '/api/v1/programs/{programId}',                                                        'program.config.read'),
+    ('GET',  '/api/v1/programs/{programId}/point-types',                                            'program.config.read'),
+    ('POST', '/api/v1/programs/{programId}/point-types',                                            'program.config.write'),
+    ('GET',  '/api/v1/programs/{programId}/members/{memberId}/accounts/{accountId}',               'account.read'),
+    ('POST', '/api/v1/programs/{programId}/members/{memberId}/accounts',                          'account.write'),
+    ('POST', '/api/v1/programs/{programId}/members/{memberId}/accounts/{accountId}/suspend',       'account.write'),
+    ('POST', '/api/v1/programs/{programId}/members/{memberId}/accounts/{accountId}/close',         'account.write')
+) AS v(method, path, code)
+JOIN auth_permission p ON p.code = v.code
+ON CONFLICT (http_method, path_template) DO NOTHING;

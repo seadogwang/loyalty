@@ -79,7 +79,7 @@ class FlywayMigrationIT {
 
             try (ResultSet r = s.executeQuery("SELECT count(*) FROM loyalty.auth_permission")) {
                 r.next();
-                assertThat(r.getInt(1)).isEqualTo(20);
+                assertThat(r.getInt(1)).isEqualTo(22);
             }
             try (ResultSet r = s.executeQuery("SELECT count(*) FROM loyalty.auth_role WHERE managed = true")) {
                 r.next();

@@ -24,6 +24,20 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: "com.loyalty.*"
+  cache:
+    type: ${CACHE_TYPE:redis}
+    redis:
+      time-to-live: 30s
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+mybatis:
+  mapper-locations: classpath*:mapper/*.xml
+  type-handlers-package: com.loyalty.common.db
+  configuration:
+    map-underscore-to-camel-case: true
 
 eureka:
   client:

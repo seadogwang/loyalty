@@ -171,4 +171,33 @@ class MemberFlowIT {
                         .contentType(MediaType.APPLICATION_JSON).content("{\"identities\":[]}"))
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    void pointTypeCreateAndCapabilityValidation(@Autowired MockMvc mvc, @Autowired ObjectMapper json) throws Exception {
+        // Invalid capability combo: record_only + redeemable is rejected.
+        String bad = json.writeValueAsString(Map.of(
+                "code", "BAD", "name", "Bad", "redeemable", true, "recordOnly", true));
+        mvc.perform(post("/api/v1/programs/" + programId + "/point-types")
+                        .contentType(MediaType.APPLICATION_JSON).content(bad)
+                        .with(jwt().jwt(j -> j.subject("operator").claim("principal_type", "USER")
+                                .claim("tenant_id", tenantId.toString()).claim("program_id", programId.toString()))))
+                .andExpect(status().isBadRequest());
+
+        // Valid redeemable point type.
+        String body = json.writeValueAsString(Map.of(
+                "code", "BASIC", "name", "Basic", "redeemable", true, "tierCalculable", true));
+        mvc.perform(post("/api/v1/programs/" + programId + "/point-types")
+                        .contentType(MediaType.APPLICATION_JSON).content(body)
+                        .with(jwt().jwt(j -> j.subject("operator").claim("principal_type", "USER")
+                                .claim("tenant_id", tenantId.toString()).claim("program_id", programId.toString()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("BASIC"));
+
+        // Program scope query.
+        mvc.perform(get("/api/v1/programs/" + programId)
+                        .with(jwt().jwt(j -> j.subject("operator").claim("principal_type", "USER")
+                                .claim("tenant_id", tenantId.toString()).claim("program_id", programId.toString()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("PP"));
+    }
 }
