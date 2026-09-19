@@ -24,6 +24,10 @@ public final class PointDtos {
                                   UUID pointTypeId, BigDecimal amount,
                                   java.util.List<RedeemAllocationItem> allocations) {}
 
+    public record ReverseRequest(UUID referenceLedgerId, BigDecimal amount, String reasonCode) {}
+    public record RestoreRequest(UUID redeemLedgerId, BigDecimal amount, String reasonCode) {}
+    public record AdjustRequest(UUID pointTypeId, BigDecimal amount, String reasonCode, Source source) {}
+
     public record BalanceItem(UUID pointTypeId, BigDecimal available) {}
 
     public record BalanceResponse(UUID accountId, java.util.List<BalanceItem> balances) {}

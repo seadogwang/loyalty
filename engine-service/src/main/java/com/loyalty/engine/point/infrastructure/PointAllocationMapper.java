@@ -29,4 +29,9 @@ public interface PointAllocationMapper {
     List<PointAllocation> findByTransactionLedgerId(@Param("tenantId") UUID tenantId,
                                                      @Param("programId") UUID programId,
                                                      @Param("transactionLedgerId") UUID transactionLedgerId);
+
+    /** Sum of RESTORE allocations referencing a given CONSUME allocation (for restore caps). */
+    java.math.BigDecimal restoredForReference(@Param("tenantId") UUID tenantId,
+                                              @Param("programId") UUID programId,
+                                              @Param("referenceAllocationId") UUID referenceAllocationId);
 }

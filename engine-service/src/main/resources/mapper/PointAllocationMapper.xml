@@ -65,4 +65,11 @@
           AND transaction_ledger_id = #{transactionLedgerId}
         ORDER BY created_at, id
     </select>
+
+    <select id="restoredForReference" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(amount), 0) FROM loyalty.point_allocation
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId}
+          AND reference_allocation_id = #{referenceAllocationId}
+          AND allocation_type = 'RESTORE'
+    </select>
 </mapper>
