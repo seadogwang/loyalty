@@ -1,5 +1,6 @@
 package com.loyalty.engine.point;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loyalty.engine.EngineServiceApplication;
 import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
@@ -165,5 +166,52 @@ class OperationFlowIT {
                 .header("Idempotency-Key", "op-adj:2").contentType(MediaType.APPLICATION_JSON).content(body2).with(operator()))
                 .andExpect(status().isOk());
         org.assertj.core.api.Assertions.assertThat(balance(mvc, json, acct)).isEqualByComparingTo("30.00");
+    }
+
+    @Test
+    void expireCreatesExpireLedgerAndIsIdempotent(@Autowired MockMvc mvc, @Autowired ObjectMapper json,
+                                                   @Autowired ExpireService expireService) throws Exception {
+        UUID acct = newAccount(mvc, json, "AC-EX");
+        // Earn an asset already past its expiry (balance excludes it = 0).
+        String body = json.writeValueAsString(Map.of("pointTypeId", pointTypeId.toString(), "amount", "100.00",
+                "source", Map.of("type", "ORDER", "id", "EX1"),
+                "expireAt", java.time.Instant.now().minus(java.time.Duration.ofHours(1)).toString()));
+        mvc.perform(post(base(acct) + "/point-operations/earn")
+                .header("Idempotency-Key", "op-earn:EX").contentType(MediaType.APPLICATION_JSON).content(body).with(operator()))
+                .andExpect(status().isOk());
+        org.assertj.core.api.Assertions.assertThat(balance(mvc, json, acct)).isEqualByComparingTo("0.00");
+
+        int expired = expireService.expireDueAssets(tenantId, programId, memberId, acct, pointTypeId);
+        org.assertj.core.api.Assertions.assertThat(expired).isEqualTo(1);
+
+        // The EXPIRE ledger appears in the ledger query.
+        String ledger = mvc.perform(get(base(acct) + "/ledger?pointTypeId=" + pointTypeId).with(operator()))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        org.assertj.core.api.Assertions.assertThat(ledger).contains("EXPIRE");
+
+        // Re-running expire is a no-op (idempotent).
+        int again = expireService.expireDueAssets(tenantId, programId, memberId, acct, pointTypeId);
+        org.assertj.core.api.Assertions.assertThat(again).isZero();
+    }
+
+    @Test
+    void ledgerCursorPagination(@Autowired MockMvc mvc, @Autowired ObjectMapper json) throws Exception {
+        UUID acct = newAccount(mvc, json, "AC-LG");
+        earn(mvc, json, acct, "L1", "10.00");
+        earn(mvc, json, acct, "L2", "20.00");
+        earn(mvc, json, acct, "L3", "30.00");
+
+        String page1 = mvc.perform(get(base(acct) + "/ledger?pointTypeId=" + pointTypeId + "&limit=2").with(operator()))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        JsonNode tree1 = json.readTree(page1);
+        org.assertj.core.api.Assertions.assertThat(tree1.get("items").size()).isEqualTo(2);
+        org.assertj.core.api.Assertions.assertThat(tree1.get("nextCursor").asText()).isNotBlank();
+        String cursor = tree1.get("nextCursor").asText();
+
+        String page2 = mvc.perform(get(base(acct) + "/ledger?pointTypeId=" + pointTypeId + "&cursor=" + cursor).with(operator()))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        JsonNode tree2 = json.readTree(page2);
+        org.assertj.core.api.Assertions.assertThat(tree2.get("items").size()).isEqualTo(1);
+        org.assertj.core.api.Assertions.assertThat(tree2.has("nextCursor")).isFalse();
     }
 }

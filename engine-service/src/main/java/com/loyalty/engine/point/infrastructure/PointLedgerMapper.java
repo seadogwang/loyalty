@@ -5,6 +5,7 @@ import com.loyalty.engine.point.domain.PointLedger;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,4 +32,14 @@ public interface PointLedgerMapper {
                                         @Param("programId") UUID programId,
                                         @Param("sourceType") String sourceType,
                                         @Param("sourceId") String sourceId);
+
+    /** Cursor-paginated ledger for an account+point_type (newest first). */
+    List<PointLedger> findPage(@Param("tenantId") UUID tenantId,
+                              @Param("programId") UUID programId,
+                              @Param("accountId") UUID accountId,
+                              @Param("pointTypeId") UUID pointTypeId,
+                              @Param("from") Instant from,
+                              @Param("cursorTime") Instant cursorTime,
+                              @Param("cursorId") UUID cursorId,
+                              @Param("limit") int limit);
 }

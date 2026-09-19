@@ -70,4 +70,18 @@
         WHERE tenant_id = #{tenantId} AND program_id = #{programId}
           AND source_type = #{sourceType} AND source_id = #{sourceId}
     </select>
+
+    <select id="findPage" resultMap="pointLedger">
+        SELECT <include refid="assetColumns"/>
+        FROM loyalty.point_ledger
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId}
+          AND account_id = #{accountId} AND point_type_id = #{pointTypeId}
+          <if test="from != null">AND effective_at &gt;= #{from}</if>
+          <if test="cursorTime != null">
+            AND (created_at &lt; #{cursorTime}
+                 OR (created_at = #{cursorTime} AND id &lt; #{cursorId}))
+          </if>
+        ORDER BY created_at DESC, id DESC
+        LIMIT #{limit}
+    </select>
 </mapper>

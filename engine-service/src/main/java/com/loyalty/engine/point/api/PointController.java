@@ -5,6 +5,7 @@ import com.loyalty.common.context.PrincipalContext;
 import com.loyalty.common.context.TenantContext;
 import com.loyalty.engine.point.BalanceService;
 import com.loyalty.engine.point.EarnService;
+import com.loyalty.engine.point.PointQueryService;
 import com.loyalty.engine.point.RedeemService;
 import com.loyalty.engine.point.RestoreService;
 import com.loyalty.engine.point.ReverseService;
@@ -29,18 +30,20 @@ public class PointController {
     private final RestoreService restoreService;
     private final AdjustService adjustService;
     private final BalanceService balanceService;
+    private final PointQueryService queryService;
     private final ObjectMapper json;
 
     public PointController(EarnService earnService, RedeemService redeemService,
                            ReverseService reverseService, RestoreService restoreService,
                            AdjustService adjustService, BalanceService balanceService,
-                           ObjectMapper json) {
+                           PointQueryService queryService, ObjectMapper json) {
         this.earnService = earnService;
         this.redeemService = redeemService;
         this.reverseService = reverseService;
         this.restoreService = restoreService;
         this.adjustService = adjustService;
         this.balanceService = balanceService;
+        this.queryService = queryService;
         this.json = json;
     }
 
@@ -127,5 +130,17 @@ public class PointController {
         BigDecimal available = balanceService.calculateRedeemable(ctx.tenantId(), programId, accountId, pointTypeId);
         return new PointDtos.BalanceResponse(accountId,
                 List.of(new PointDtos.BalanceItem(pointTypeId, available)));
+    }
+
+    @GetMapping("/ledger")
+    public com.loyalty.common.web.CursorPage<PointDtos.LedgerItem> ledger(
+            @PathVariable UUID programId,
+            @PathVariable UUID memberId,
+            @PathVariable UUID accountId,
+            @RequestParam("pointTypeId") UUID pointTypeId,
+            @RequestParam(value = "from", required = false) String from,
+            @RequestParam(value = "cursor", required = false) String cursor,
+            @RequestParam(value = "limit", required = false) Integer limit) {
+        return queryService.ledger(programId, accountId, pointTypeId, from, cursor, limit);
     }
 }
