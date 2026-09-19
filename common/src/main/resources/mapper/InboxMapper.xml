@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.loyalty.common.event.InboxMapper">
+
+    <resultMap id="inboxEvent" type="com.loyalty.common.event.InboxEvent">
+        <constructor>
+            <arg column="consumer_name" javaType="string"/>
+            <arg column="event_id" javaType="java.util.UUID"/>
+            <arg column="tenant_id" javaType="java.util.UUID"/>
+            <arg column="program_id" javaType="java.util.UUID"/>
+            <arg column="event_type" javaType="string"/>
+            <arg column="status" javaType="string"/>
+            <arg column="received_at" javaType="java.time.Instant"/>
+            <arg column="processed_at" javaType="java.time.Instant"/>
+            <arg column="error_message" javaType="string"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insertReceived">
+        INSERT INTO loyalty.inbox_event
+          (consumer_name, event_id, tenant_id, program_id, event_type, status)
+        VALUES (#{consumerName}, #{eventId}, #{tenantId}, #{programId}, #{eventType}, 'RECEIVED')
+        ON CONFLICT (consumer_name, event_id) DO NOTHING
+    </insert>
+
+    <update id="markProcessed">
+        UPDATE loyalty.inbox_event SET status = 'PROCESSED', processed_at = now()
+        WHERE consumer_name = #{consumerName} AND event_id = #{eventId}
+    </update>
+
+    <update id="markFailed">
+        UPDATE loyalty.inbox_event SET status = 'FAILED', error_message = #{error}
+        WHERE consumer_name = #{consumerName} AND event_id = #{eventId}
+    </update>
+
+    <select id="find" resultMap="inboxEvent">
+        SELECT consumer_name, event_id, tenant_id, program_id, event_type, status,
+               received_at, processed_at, error_message
+        FROM loyalty.inbox_event
+        WHERE consumer_name = #{consumerName} AND event_id = #{eventId}
+    </select>
+</mapper>

@@ -22,7 +22,7 @@ import java.util.UUID;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record EventEnvelope(
         @JsonProperty("specversion") String specVersion,
-        @JsonProperty("id") String id,
+        @JsonProperty("id") UUID id,
         @JsonProperty("type") String type,
         @JsonProperty("source") String source,
         @JsonProperty("subject") String subject,
@@ -42,7 +42,7 @@ public record EventEnvelope(
     }
 
     public static final class Builder {
-        private String id = "evt_" + UUID.randomUUID();
+        private UUID id = UUID.randomUUID();
         private String type;
         private String source;
         private String subject;
@@ -53,7 +53,7 @@ public record EventEnvelope(
         private String causationId;
         private Object data;
 
-        public Builder id(String id) { this.id = id; return this; }
+        public Builder id(UUID id) { this.id = id; return this; }
         public Builder type(String type) { this.type = type; return this; }
         public Builder source(String source) { this.source = source; return this; }
         public Builder subject(String subject) { this.subject = subject; return this; }

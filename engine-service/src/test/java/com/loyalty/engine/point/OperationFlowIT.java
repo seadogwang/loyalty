@@ -77,7 +77,7 @@ class OperationFlowIT {
     }
 
     @AfterAll
-    static void teardown() throws Exception { if (EmbeddedPgConfig.pg != null) EmbeddedPgConfig.pg.close(); }
+    static void teardown() throws Exception { /* PG closed by context (bean destroyMethod); do not close shared cached contexts early. */ }
 
     private org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor operator() {
         return jwt().jwt(j -> j.subject("operator").claim("principal_type", "USER")

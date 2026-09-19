@@ -18,10 +18,14 @@ spring:
     validate-on-migrate: true
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
     consumer:
       group-id: engine-service
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       properties:
         spring.json.trusted.packages: "com.loyalty.*"
   cache:
@@ -43,6 +47,12 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
+
+loyalty:
+  outbox:
+    enabled: true
+    batch-size: 50
+    poll-interval-ms: 1000
 
 management:
   endpoints:

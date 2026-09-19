@@ -100,11 +100,7 @@ class RedeemFlowIT {
     }
 
     @AfterAll
-    static void teardown() throws Exception {
-        if (EmbeddedPgConfig.pg != null) {
-            EmbeddedPgConfig.pg.close();
-        }
-    }
+    static void teardown() throws Exception { /* PG closed by context; keep open for cached contexts. */ }
 
     private org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor operator() {
         return jwt().jwt(j -> j.subject("operator").claim("principal_type", "USER")

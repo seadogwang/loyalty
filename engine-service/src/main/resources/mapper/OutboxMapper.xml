@@ -9,4 +9,39 @@
         VALUES (#{id}, #{tenantId}, #{programId}, #{aggregateType}, #{aggregateId},
                 #{eventType}, #{payload}::jsonb, 'NEW')
     </insert>
+
+    <resultMap id="outboxEvent" type="com.loyalty.engine.point.domain.OutboxEvent">
+        <constructor>
+            <arg column="id" javaType="java.util.UUID"/>
+            <arg column="tenant_id" javaType="java.util.UUID"/>
+            <arg column="program_id" javaType="java.util.UUID"/>
+            <arg column="aggregate_type" javaType="string"/>
+            <arg column="aggregate_id" javaType="string"/>
+            <arg column="event_type" javaType="string"/>
+            <arg column="payload" javaType="string"/>
+            <arg column="status" javaType="string"/>
+            <arg column="created_at" javaType="java.time.Instant"/>
+            <arg column="published_at" javaType="java.time.Instant"/>
+        </constructor>
+    </resultMap>
+
+    <select id="findNextToPublish" resultMap="outboxEvent">
+        SELECT id, tenant_id, program_id, aggregate_type, aggregate_id, event_type,
+               payload::text AS payload, status, created_at, published_at
+        FROM loyalty.outbox_event
+        WHERE status = 'NEW'
+        ORDER BY created_at, id
+        LIMIT #{limit}
+        FOR UPDATE SKIP LOCKED
+    </select>
+
+    <update id="markPublished">
+        UPDATE loyalty.outbox_event SET status = 'PUBLISHED', published_at = now()
+        WHERE id = #{id}
+    </update>
+
+    <update id="markFailed">
+        UPDATE loyalty.outbox_event SET status = 'FAILED'
+        WHERE id = #{id}
+    </update>
 </mapper>
