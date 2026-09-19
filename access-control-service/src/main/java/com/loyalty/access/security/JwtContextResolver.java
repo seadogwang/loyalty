@@ -1,6 +1,5 @@
 package com.loyalty.access.security;
 
-import com.loyalty.access.domain.PrincipalType;
 import com.loyalty.access.repository.AccessReadRepository;
 import com.loyalty.common.context.PrincipalContext;
 import com.loyalty.common.context.TenantContext;
@@ -46,7 +45,7 @@ public class JwtContextResolver {
         if (subject == null || subject.isBlank()) {
             return null;
         }
-        PrincipalType type = principalType(jwt);
+        PrincipalContext.PrincipalType type = principalType(jwt);
         // Resolve the system principal id; may be null for first-seen subjects.
         return new PrincipalContext(resolvePrincipalId(type, subject), type, subject);
     }
@@ -64,7 +63,7 @@ public class JwtContextResolver {
         return new TenantContext(tenantId, programId);
     }
 
-    private UUID resolvePrincipalId(PrincipalType type, String subject) {
+    private UUID resolvePrincipalId(PrincipalContext.PrincipalType type, String subject) {
         if (type == null) {
             return null;
         }
@@ -76,17 +75,19 @@ public class JwtContextResolver {
         }
     }
 
-    private static PrincipalType principalType(Jwt jwt) {
+    private static PrincipalContext.PrincipalType principalType(Jwt jwt) {
         Object raw = jwt.getClaim("principal_type");
         if (raw instanceof String s && !s.isBlank()) {
             try {
-                return PrincipalType.valueOf(s.toUpperCase());
+                return PrincipalContext.PrincipalType.valueOf(s.toUpperCase());
             } catch (IllegalArgumentException ignored) {
                 // fall through
             }
         }
         // Heuristic: client-credentials clients carry 'client_id' without 'sub' use.
-        return jwt.getClaim("client_id") != null ? PrincipalType.SERVICE_ACCOUNT : PrincipalType.USER;
+        return jwt.getClaim("client_id") != null
+                ? PrincipalContext.PrincipalType.SERVICE_ACCOUNT
+                : PrincipalContext.PrincipalType.USER;
     }
 
     private static UUID uuid(Map<String, Object> claims, String key) {

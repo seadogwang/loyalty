@@ -12,11 +12,12 @@ import java.util.UUID;
 public record PrincipalContext(UUID principalId, PrincipalType principalType, String subject) {
 
     public PrincipalContext {
-        Objects.requireNonNull(principalId, "principalId");
         Objects.requireNonNull(principalType, "principalType");
         if (subject == null || subject.isBlank()) {
             throw new IllegalArgumentException("subject must not be blank");
         }
+        // principalId may be null for a first-seen valid subject that has no role yet
+        // (design M2-T01): the subject is authenticated but has zero permissions.
     }
 
     public enum PrincipalType {
