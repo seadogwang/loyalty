@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.loyalty.engine.point.infrastructure.PointAllocationMapper">
+
+    <resultMap id="allocationAggregate" type="com.loyalty.engine.point.domain.AllocationAggregate">
+        <constructor>
+            <arg column="asset_ledger_id" javaType="java.util.UUID"/>
+            <arg column="consumed" javaType="java.math.BigDecimal"/>
+            <arg column="expired" javaType="java.math.BigDecimal"/>
+            <arg column="reversed" javaType="java.math.BigDecimal"/>
+            <arg column="adjust_debit" javaType="java.math.BigDecimal"/>
+            <arg column="restored" javaType="java.math.BigDecimal"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="pointAllocation" type="com.loyalty.engine.point.domain.PointAllocation">
+        <constructor>
+            <arg column="id" javaType="java.util.UUID"/>
+            <arg column="tenant_id" javaType="java.util.UUID"/>
+            <arg column="program_id" javaType="java.util.UUID"/>
+            <arg column="member_id" javaType="java.util.UUID"/>
+            <arg column="account_id" javaType="java.util.UUID"/>
+            <arg column="point_type_id" javaType="java.util.UUID"/>
+            <arg column="transaction_ledger_id" javaType="java.util.UUID"/>
+            <arg column="asset_ledger_id" javaType="java.util.UUID"/>
+            <arg column="reference_allocation_id" javaType="java.util.UUID"/>
+            <arg column="allocation_type" javaType="com.loyalty.common.enums.AllocationType"
+                 typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+            <arg column="amount" javaType="java.math.BigDecimal"/>
+            <arg column="created_at" javaType="java.time.Instant"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.loyalty.engine.point.domain.PointAllocation">
+        INSERT INTO loyalty.point_allocation
+          (id, tenant_id, program_id, member_id, account_id, point_type_id,
+           transaction_ledger_id, asset_ledger_id, reference_allocation_id, allocation_type, amount)
+        VALUES (#{id}, #{tenantId}, #{programId}, #{memberId}, #{accountId}, #{pointTypeId},
+                #{transactionLedgerId}, #{assetLedgerId}, #{referenceAllocationId},
+                #{allocationType, typeHandler=org.apache.ibatis.type.EnumTypeHandler}, #{amount})
+    </insert>
+
+    <select id="sumByAssetLedgerIds" resultMap="allocationAggregate">
+        SELECT asset_ledger_id,
+               COALESCE(SUM(amount) FILTER (WHERE allocation_type = 'CONSUME'), 0) AS consumed,
+               COALESCE(SUM(amount) FILTER (WHERE allocation_type = 'EXPIRE'),  0) AS expired,
+               COALESCE(SUM(amount) FILTER (WHERE allocation_type = 'REVERSE'), 0) AS reversed,
+               COALESCE(SUM(amount) FILTER (WHERE allocation_type = 'ADJUST'),  0) AS adjust_debit,
+               COALESCE(SUM(amount) FILTER (WHERE allocation_type = 'RESTORE'),0) AS restored
+        FROM loyalty.point_allocation
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId}
+          AND account_id = #{accountId} AND point_type_id = #{pointTypeId}
+          AND asset_ledger_id IN
+          <foreach collection="assetLedgerIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        GROUP BY asset_ledger_id
+    </select>
+
+    <select id="findByTransactionLedgerId" resultMap="pointAllocation">
+        SELECT id, tenant_id, program_id, member_id, account_id, point_type_id,
+               transaction_ledger_id, asset_ledger_id, reference_allocation_id,
+               allocation_type, amount, created_at
+        FROM loyalty.point_allocation
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId}
+          AND transaction_ledger_id = #{transactionLedgerId}
+        ORDER BY created_at, id
+    </select>
+</mapper>

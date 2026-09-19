@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.loyalty.engine.point.infrastructure.PointLedgerMapper">
+
+    <resultMap id="pointLedger" type="com.loyalty.engine.point.domain.PointLedger">
+        <constructor>
+            <arg column="id" javaType="java.util.UUID"/>
+            <arg column="tenant_id" javaType="java.util.UUID"/>
+            <arg column="program_id" javaType="java.util.UUID"/>
+            <arg column="member_id" javaType="java.util.UUID"/>
+            <arg column="account_id" javaType="java.util.UUID"/>
+            <arg column="point_type_id" javaType="java.util.UUID"/>
+            <arg column="transaction_type" javaType="com.loyalty.common.enums.TransactionType"
+                 typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+            <arg column="amount" javaType="java.math.BigDecimal"/>
+            <arg column="effective_at" javaType="java.time.Instant"/>
+            <arg column="expire_at" javaType="java.time.Instant"/>
+            <arg column="source_type" javaType="com.loyalty.common.enums.SourceType"
+                 typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+            <arg column="source_id" javaType="string"/>
+            <arg column="reference_ledger_id" javaType="java.util.UUID"/>
+            <arg column="operation_id" javaType="java.util.UUID"/>
+            <arg column="rule_id" javaType="java.util.UUID"/>
+            <arg column="rule_version_id" javaType="java.util.UUID"/>
+            <arg column="rule_version" javaType="string"/>
+            <arg column="correlation_id" javaType="string"/>
+            <arg column="calculation_snapshot" javaType="string"/>
+            <arg column="created_at" javaType="java.time.Instant"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.loyalty.engine.point.domain.PointLedger">
+        INSERT INTO loyalty.point_ledger
+          (id, tenant_id, program_id, member_id, account_id, point_type_id, transaction_type,
+           amount, effective_at, expire_at, source_type, source_id, reference_ledger_id,
+           operation_id, rule_id, rule_version_id, rule_version, correlation_id, calculation_snapshot)
+        VALUES (#{id}, #{tenantId}, #{programId}, #{memberId}, #{accountId}, #{pointTypeId},
+                #{transactionType, typeHandler=org.apache.ibatis.type.EnumTypeHandler},
+                #{amount}, #{effectiveAt}, #{expireAt},
+                #{sourceType, typeHandler=org.apache.ibatis.type.EnumTypeHandler},
+                #{sourceId}, #{referenceLedgerId}, #{operationId}, #{ruleId}, #{ruleVersionId},
+                #{ruleVersion}, #{correlationId}, (#{calculationSnapshot})::jsonb)
+    </insert>
+
+    <sql id="assetColumns">
+        id, tenant_id, program_id, member_id, account_id, point_type_id, transaction_type,
+        amount, effective_at, expire_at, source_type, source_id, reference_ledger_id,
+        operation_id, rule_id, rule_version_id, rule_version, correlation_id,
+        calculation_snapshot::text AS calculation_snapshot, created_at
+    </sql>
+
+    <select id="findByIdScoped" resultMap="pointLedger">
+        SELECT <include refid="assetColumns"/>
+        FROM loyalty.point_ledger
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId} AND id = #{id}
+    </select>
+
+    <select id="findRedeemableAssets" resultMap="pointLedger">
+        SELECT <include refid="assetColumns"/>
+        FROM loyalty.point_ledger
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId}
+          AND account_id = #{accountId} AND point_type_id = #{pointTypeId}
+          AND transaction_type IN ('EARN','ADJUST','RECALCULATE') AND amount > 0
+    </select>
+
+    <select id="findBySourceScoped" resultMap="pointLedger">
+        SELECT <include refid="assetColumns"/>
+        FROM loyalty.point_ledger
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId}
+          AND source_type = #{sourceType} AND source_id = #{sourceId}
+    </select>
+</mapper>
