@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.loyalty.engine.point.rule.infrastructure.RuleVersionViewMapper">
+
+    <resultMap id="ruleVersionView" type="com.loyalty.engine.point.rule.RuleVersionView">
+        <constructor>
+            <arg column="id" javaType="java.util.UUID"/>
+            <arg column="rule_definition_id" javaType="java.util.UUID"/>
+            <arg column="version_no" javaType="java.lang.Integer"/>
+            <arg column="metadata" javaType="string"/>
+        </constructor>
+    </resultMap>
+
+    <select id="findPublishedByDefinition" resultMap="ruleVersionView">
+        SELECT id, rule_definition_id, version_no, metadata::text AS metadata
+        FROM loyalty.rule_version
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId}
+          AND rule_definition_id = #{ruleDefinitionId} AND status = 'PUBLISHED'
+        LIMIT 1
+    </select>
+</mapper>

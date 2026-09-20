@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.loyalty.member.rule.infrastructure.RuleDefinitionMapper">
+
+    <resultMap id="ruleDefinition" type="com.loyalty.member.rule.domain.RuleDefinition">
+        <constructor>
+            <arg column="id" javaType="java.util.UUID"/>
+            <arg column="tenant_id" javaType="java.util.UUID"/>
+            <arg column="program_id" javaType="java.util.UUID"/>
+            <arg column="code" javaType="string"/>
+            <arg column="name" javaType="string"/>
+            <arg column="domain" javaType="string"/>
+            <arg column="status" javaType="string"/>
+            <arg column="created_at" javaType="java.time.Instant"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insert">
+        INSERT INTO loyalty.rule_definition (id, tenant_id, program_id, code, name, domain, status)
+        VALUES (#{id}, #{tenantId}, #{programId}, #{code}, #{name}, #{domain}, 'ACTIVE')
+    </insert>
+
+    <select id="findByIdScoped" resultMap="ruleDefinition">
+        SELECT id, tenant_id, program_id, code, name, domain, status, created_at
+        FROM loyalty.rule_definition
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId} AND id = #{id}
+    </select>
+
+    <select id="listByProgram" resultMap="ruleDefinition">
+        SELECT id, tenant_id, program_id, code, name, domain, status, created_at
+        FROM loyalty.rule_definition
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId} AND status = 'ACTIVE'
+        ORDER BY code
+    </select>
+</mapper>

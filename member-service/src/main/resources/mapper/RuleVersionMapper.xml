@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.loyalty.member.rule.infrastructure.RuleVersionMapper">
+
+    <resultMap id="ruleVersion" type="com.loyalty.member.rule.domain.RuleVersion">
+        <constructor>
+            <arg column="id" javaType="java.util.UUID"/>
+            <arg column="tenant_id" javaType="java.util.UUID"/>
+            <arg column="program_id" javaType="java.util.UUID"/>
+            <arg column="rule_definition_id" javaType="java.util.UUID"/>
+            <arg column="version_no" javaType="java.lang.Integer"/>
+            <arg column="status" javaType="string"/>
+            <arg column="effective_from" javaType="java.time.Instant"/>
+            <arg column="effective_to" javaType="java.time.Instant"/>
+            <arg column="artifact_uri" javaType="string"/>
+            <arg column="checksum" javaType="string"/>
+            <arg column="metadata" javaType="string"/>
+            <arg column="created_by" javaType="string"/>
+            <arg column="created_at" javaType="java.time.Instant"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="versionColumns">
+        id, tenant_id, program_id, rule_definition_id, version_no, status, effective_from,
+        effective_to, artifact_uri, checksum, metadata::text AS metadata, created_by, created_at
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO loyalty.rule_version
+          (id, tenant_id, program_id, rule_definition_id, version_no, status, metadata, created_by)
+        VALUES (#{id}, #{tenantId}, #{programId}, #{ruleDefinitionId}, #{versionNo}, #{status},
+                (#{metadata})::jsonb, #{createdBy})
+    </insert>
+
+    <select id="findByIdScoped" resultMap="ruleVersion">
+        SELECT <include refid="versionColumns"/>
+        FROM loyalty.rule_version
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId} AND id = #{id}
+    </select>
+
+    <select id="findPublishedByDefinition" resultMap="ruleVersion">
+        SELECT <include refid="versionColumns"/>
+        FROM loyalty.rule_version
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId}
+          AND rule_definition_id = #{ruleDefinitionId} AND status = 'PUBLISHED'
+        LIMIT 1
+    </select>
+
+    <select id="findByDefinition" resultMap="ruleVersion">
+        SELECT <include refid="versionColumns"/>
+        FROM loyalty.rule_version
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId}
+          AND rule_definition_id = #{ruleDefinitionId}
+        ORDER BY version_no DESC
+    </select>
+
+    <update id="updateStatus">
+        UPDATE loyalty.rule_version SET status = #{status}
+            <if test="effectiveFrom != null">, effective_from = #{effectiveFrom}</if>
+            <if test="effectiveTo != null">, effective_to = #{effectiveTo}</if>
+        WHERE id = #{id}
+    </update>
+</mapper>
