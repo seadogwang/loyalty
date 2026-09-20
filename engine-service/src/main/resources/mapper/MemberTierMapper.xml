@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.loyalty.engine.tier.infrastructure.MemberTierMapper">
+    <resultMap id="mt" type="com.loyalty.engine.tier.domain.MemberTier">
+        <constructor>
+            <arg column="id" javaType="java.util.UUID"/>
+            <arg column="tenant_id" javaType="java.util.UUID"/>
+            <arg column="program_id" javaType="java.util.UUID"/>
+            <arg column="member_id" javaType="java.util.UUID"/>
+            <arg column="tier_scheme_id" javaType="java.util.UUID"/>
+            <arg column="tier_id" javaType="java.util.UUID"/>
+            <arg column="evaluation_period_id" javaType="string"/>
+            <arg column="effective_from" javaType="java.time.Instant"/>
+            <arg column="effective_to" javaType="java.time.Instant"/>
+            <arg column="status" javaType="string"/>
+        </constructor>
+    </resultMap>
+    <select id="findActive" resultMap="mt">
+        SELECT id, tenant_id, program_id, member_id, tier_scheme_id, tier_id, evaluation_period_id,
+               effective_from, effective_to, status
+        FROM loyalty.member_tier
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId} AND member_id = #{memberId}
+          AND tier_scheme_id = #{schemeId} AND status = 'ACTIVE'
+    </select>
+    <insert id="insert">
+        INSERT INTO loyalty.member_tier (id, tenant_id, program_id, member_id, tier_scheme_id, tier_id,
+              evaluation_period_id, effective_from, status)
+        VALUES (#{id}, #{tenantId}, #{programId}, #{memberId}, #{schemeId}, #{tierId},
+                #{evaluationPeriodId}, #{effectiveFrom}, 'ACTIVE')
+    </insert>
+    <update id="closeActive">
+        UPDATE loyalty.member_tier SET status = 'CLOSED', effective_to = #{now}
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId} AND member_id = #{memberId}
+          AND tier_scheme_id = #{schemeId} AND status = 'ACTIVE'
+    </update>
+    <select id="findHistory" resultMap="mt">
+        SELECT id, tenant_id, program_id, member_id, tier_scheme_id, tier_id, evaluation_period_id,
+               effective_from, effective_to, status
+        FROM loyalty.member_tier
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId} AND member_id = #{memberId}
+          AND tier_scheme_id = #{schemeId}
+        ORDER BY effective_from DESC
+    </select>
+    <select id="findAllActiveByMember" resultMap="mt">
+        SELECT id, tenant_id, program_id, member_id, tier_scheme_id, tier_id, evaluation_period_id,
+               effective_from, effective_to, status
+        FROM loyalty.member_tier
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId} AND member_id = #{memberId}
+          AND status = 'ACTIVE'
+    </select>
+</mapper>

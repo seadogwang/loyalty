@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.loyalty.engine.tier.infrastructure.TierViewMapper">
+    <resultMap id="v" type="com.loyalty.engine.tier.domain.TierView">
+        <constructor>
+            <arg column="id" javaType="java.util.UUID"/>
+            <arg column="tier_scheme_id" javaType="java.util.UUID"/>
+            <arg column="code" javaType="string"/>
+            <arg column="rank_no" javaType="_int"/>
+            <arg column="config_json" javaType="string"/>
+        </constructor>
+    </resultMap>
+    <select id="listByScheme" resultMap="v">
+        SELECT id, tier_scheme_id, code, rank_no, config_json::text AS config_json
+        FROM loyalty.tier
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId} AND tier_scheme_id = #{schemeId}
+          AND status = 'ACTIVE'
+        ORDER BY rank_no ASC
+    </select>
+    <select id="findScoped" resultMap="v">
+        SELECT id, tier_scheme_id, code, rank_no, config_json::text AS config_json
+        FROM loyalty.tier
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId} AND id = #{id}
+    </select>
+</mapper>

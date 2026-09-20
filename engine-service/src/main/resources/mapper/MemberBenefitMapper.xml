@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.loyalty.engine.benefit.infrastructure.MemberBenefitMapper">
+    <resultMap id="mb" type="com.loyalty.engine.benefit.domain.MemberBenefit">
+        <constructor>
+            <arg column="id" javaType="java.util.UUID"/>
+            <arg column="tenant_id" javaType="java.util.UUID"/>
+            <arg column="program_id" javaType="java.util.UUID"/>
+            <arg column="member_id" javaType="java.util.UUID"/>
+            <arg column="benefit_id" javaType="java.util.UUID"/>
+            <arg column="source_type" javaType="string"/>
+            <arg column="source_id" javaType="string"/>
+            <arg column="effective_from" javaType="java.time.Instant"/>
+            <arg column="effective_to" javaType="java.time.Instant"/>
+            <arg column="status" javaType="string"/>
+        </constructor>
+    </resultMap>
+    <insert id="insert">
+        INSERT INTO loyalty.member_benefit (id, tenant_id, program_id, member_id, benefit_id, source_type, source_id, effective_from, status)
+        VALUES (#{id}, #{tenantId}, #{programId}, #{memberId}, #{benefitId}, #{sourceType}, #{sourceId}, now(), 'ACTIVE')
+    </insert>
+    <select id="findActiveByMemberAndBenefit" resultMap="mb">
+        SELECT id, tenant_id, program_id, member_id, benefit_id, source_type, source_id,
+               effective_from, effective_to, status
+        FROM loyalty.member_benefit
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId} AND member_id = #{memberId}
+          AND benefit_id = #{benefitId} AND status = 'ACTIVE'
+    </select>
+    <select id="findActiveByMember" resultMap="mb">
+        SELECT id, tenant_id, program_id, member_id, benefit_id, source_type, source_id,
+               effective_from, effective_to, status
+        FROM loyalty.member_benefit
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId} AND member_id = #{memberId}
+          AND status = 'ACTIVE'
+    </select>
+</mapper>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.loyalty.engine.tier.infrastructure.TierEvaluationMapper">
+    <resultMap id="te" type="com.loyalty.engine.tier.domain.TierEvaluation">
+        <constructor>
+            <arg column="id" javaType="java.util.UUID"/>
+            <arg column="tenant_id" javaType="java.util.UUID"/>
+            <arg column="program_id" javaType="java.util.UUID"/>
+            <arg column="member_id" javaType="java.util.UUID"/>
+            <arg column="tier_scheme_id" javaType="java.util.UUID"/>
+            <arg column="evaluation_period_id" javaType="string"/>
+            <arg column="period_start" javaType="java.time.Instant"/>
+            <arg column="period_end" javaType="java.time.Instant"/>
+            <arg column="current_tier_id" javaType="java.util.UUID"/>
+            <arg column="target_tier_id" javaType="java.util.UUID"/>
+            <arg column="decision" javaType="string"/>
+            <arg column="transition_mode" javaType="string"/>
+            <arg column="source_event_id" javaType="java.util.UUID"/>
+            <arg column="idempotency_key" javaType="string"/>
+            <arg column="evaluated_at" javaType="java.time.Instant"/>
+        </constructor>
+    </resultMap>
+    <insert id="insert">
+        INSERT INTO loyalty.tier_evaluation
+          (id, tenant_id, program_id, member_id, tier_scheme_id, evaluation_period_id, period_start,
+           period_end, current_tier_id, target_tier_id, decision, transition_mode, source_event_id,
+           idempotency_key)
+        VALUES (#{id}, #{tenantId}, #{programId}, #{memberId}, #{schemeId}, #{evaluationPeriodId},
+                #{periodStart}, #{periodEnd}, #{currentTierId}, #{targetTierId}, #{decision},
+                #{transitionMode}, #{sourceEventId}, #{idempotencyKey})
+        ON CONFLICT DO NOTHING
+    </insert>
+    <select id="findByIdempotency" resultMap="te">
+        SELECT id, tenant_id, program_id, member_id, tier_scheme_id, evaluation_period_id, period_start,
+               period_end, current_tier_id, target_tier_id, decision, transition_mode, source_event_id,
+               idempotency_key, evaluated_at
+        FROM loyalty.tier_evaluation
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId} AND member_id = #{memberId}
+          AND tier_scheme_id = #{schemeId} AND evaluation_period_id = #{evaluationPeriodId}
+          AND idempotency_key = #{idempotencyKey}
+    </select>
+    <select id="listByMemberScheme" resultMap="te">
+        SELECT id, tenant_id, program_id, member_id, tier_scheme_id, evaluation_period_id, period_start,
+               period_end, current_tier_id, target_tier_id, decision, transition_mode, source_event_id,
+               idempotency_key, evaluated_at
+        FROM loyalty.tier_evaluation
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId} AND member_id = #{memberId}
+          AND tier_scheme_id = #{schemeId}
+        ORDER BY evaluated_at DESC
+    </select>
+</mapper>

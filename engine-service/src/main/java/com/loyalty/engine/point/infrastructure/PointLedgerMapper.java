@@ -42,4 +42,12 @@ public interface PointLedgerMapper {
                               @Param("cursorTime") Instant cursorTime,
                               @Param("cursorId") UUID cursorId,
                               @Param("limit") int limit);
+
+    /** Ranking points for a member over a period (design 10.2): tier-calculable types,
+     *  excluding RESTORE, by effective_at. */
+    java.math.BigDecimal sumRankingPoints(@Param("tenantId") UUID tenantId,
+                                          @Param("programId") UUID programId,
+                                          @Param("memberId") UUID memberId,
+                                          @Param("periodStart") Instant periodStart,
+                                          @Param("periodEnd") Instant periodEnd);
 }

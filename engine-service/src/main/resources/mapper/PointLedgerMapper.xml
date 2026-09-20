@@ -84,4 +84,14 @@
         ORDER BY created_at DESC, id DESC
         LIMIT #{limit}
     </select>
+
+    <select id="sumRankingPoints" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(l.amount), 0) FROM loyalty.point_ledger l
+        JOIN loyalty.point_type pt
+          ON pt.tenant_id = l.tenant_id AND pt.program_id = l.program_id AND pt.id = l.point_type_id
+        WHERE l.tenant_id = #{tenantId} AND l.program_id = #{programId} AND l.member_id = #{memberId}
+          AND pt.tier_calculable = true
+          AND l.transaction_type IN ('EARN','REVERSE','ADJUST','RECALCULATE')
+          AND l.effective_at &gt;= #{periodStart} AND l.effective_at &lt; #{periodEnd}
+    </select>
 </mapper>
