@@ -37,6 +37,16 @@
                        WHERE tenant_id = #{tenantId} AND program_id = #{programId} AND id = #{memberId})
     </select>
 
+    <select id="findActiveByMember" resultMap="account">
+        SELECT id, tenant_id, program_id, member_id, account_no, account_type, status,
+               opened_at, closed_at
+        FROM loyalty.account
+        WHERE tenant_id = #{tenantId} AND program_id = #{programId} AND member_id = #{memberId}
+          AND status = 'ACTIVE'
+        ORDER BY opened_at
+        LIMIT 1
+    </select>
+
     <update id="setStatus">
         UPDATE loyalty.account SET status = #{status}
                <if test="close">, closed_at = now()</if>

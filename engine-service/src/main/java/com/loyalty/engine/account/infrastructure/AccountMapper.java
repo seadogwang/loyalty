@@ -27,6 +27,10 @@ public interface AccountMapper {
                                @Param("programId") UUID programId,
                                @Param("memberId") UUID memberId);
 
+    /** The member's first ACTIVE account (V1: one loyalty account per member). */
+    Account findActiveByMember(@Param("tenantId") UUID tenantId, @Param("programId") UUID programId,
+                              @Param("memberId") UUID memberId);
+
     int setStatus(@Param("id") UUID id, @Param("status") String status, @Param("close") boolean close);
 
     /** Advisory row lock for point operations on (tenant, program, account, point_type). */

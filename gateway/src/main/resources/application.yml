@@ -20,6 +20,10 @@ spring:
           uri: lb://engine-service
           predicates:
             - Path=/api/v1/programs/*/members/*/accounts/**
+        - id: engine-orders
+          uri: lb://engine-service
+          predicates:
+            - Path=/api/v1/programs/*/orders/**,/api/v1/programs/*/returns/**,/api/v1/programs/*/exchanges/**
         - id: engine-tier-evaluations
           uri: lb://engine-service
           predicates:
